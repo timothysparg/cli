@@ -155,7 +155,7 @@ async function edit(inputSecret: DeepPartial<k8s.V1Secret>): Promise<DeepPartial
             outputSecret = await yaml.safeLoad(secretText);
             errorMessage = "";
         } catch (e) {
-            errorMessage = `# ${e.message.replace(/\n/gm, "\n#")} \n`;
+            errorMessage = `# ${e.message.replace(/\n/gm, "\n# ")} \n`;
         }
     } while (errorMessage);
 
