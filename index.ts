@@ -245,9 +245,15 @@ function setupYargs(yargBuilder: yb.YargBuilder): void {
             describe: "Edit secret in the default editor",
             type: "boolean",
             default: false,
+        }, {
+            parameterName: "base64",
+            describe: "Base64 decode data after decrypting",
+            type: "boolean",
+            default: false,
         }],
         handler: (argv: any) => cliCommand(() => kubeCrypt({
             action: "decrypt",
+            base64: argv.base64,
             file: argv.file,
             literal: argv.literal,
             secretKey: argv["secret-key"],
@@ -274,9 +280,15 @@ function setupYargs(yargBuilder: yb.YargBuilder): void {
             describe: "Edit secret in the default editor",
             type: "boolean",
             default: false,
+        }, {
+            parameterName: "base64",
+            describe: "Base64 encode data before encrypting",
+            type: "boolean",
+            default: false,
         }],
         handler: (argv: any) => cliCommand(() => kubeCrypt({
             action: "encrypt",
+            base64: argv.base64,
             file: argv.file,
             literal: argv.literal,
             secretKey: argv["secret-key"],
