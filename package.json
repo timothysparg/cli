@@ -57,6 +57,7 @@
     "read-pkg-up": "^6.0.0",
     "request": "^2.88.0",
     "source-map-support": "^0.5.12",
+    "tempy": "^0.3.0",
     "tmp-promise": "^2.0.2",
     "ts-essentials": "^3.0.0",
     "yargs": "^13.3.0"

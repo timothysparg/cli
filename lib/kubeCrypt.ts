@@ -20,9 +20,12 @@ import {
     encryptSecret,
 } from "@atomist/sdm-pack-k8s";
 import * as k8s from "@kubernetes/client-node";
+import * as child_process from "child_process";
 import * as fs from "fs-extra";
 import * as inquirer from "inquirer";
 import * as yaml from "js-yaml";
+import * as _ from "lodash";
+import * as tempy from "tempy";
 import { DeepPartial } from "ts-essentials";
 import { maskString } from "./config";
 import * as print from "./print";
@@ -39,6 +42,8 @@ export interface KubeCryptOptions {
     literal?: string;
     /** Encryption key to use for encryption/decryption. */
     secretKey?: string;
+    /** Open secret in editor */
+    openEditor?: boolean;
 }
 
 /**
@@ -80,6 +85,14 @@ export async function kubeCrypt(opts: KubeCryptOptions): Promise<number> {
         opts.secretKey = answers.secretKey;
     }
 
+    if (opts.openEditor) {
+        try {
+            secret = await edit(secret);
+        } catch (e) {
+            print.error(`Edit cancelled, ${e.message}`);
+            return 2;
+        }
+    }
     const action = (opts.action === "decrypt") ? decryptSecret : encryptSecret;
 
     try {
@@ -108,4 +121,49 @@ function wrapLiteral(literal: string, prop: string): DeepPartial<k8s.V1Secret> {
     };
     secret.data[prop] = literal;
     return secret;
+}
+
+async function edit(inputSecret: DeepPartial<k8s.V1Secret>): Promise<DeepPartial<k8s.V1Secret>> {
+    const comment =
+        `# Please edit the secret below. Lines beginning with a '#' will be ignored.
+# An empty file will abort the edit.
+# If an error occurs while saving the editor will be reopened with the relevant failures.
+#\n`;
+
+    let errorMessage = "";
+    let outputSecret = _.cloneDeep(inputSecret);
+    let secretText = yaml.safeDump(outputSecret);
+    do {
+        // join everything together to present it to the user
+        secretText = comment + errorMessage + secretText;
+
+        secretText = await openEditor(secretText);
+        // remove all lines that start with comments
+        secretText = secretText.replace(/^#.*\n?/gm, "");
+        if (!secretText.trim()) {
+            throw new Error("file is empty");
+        }
+
+        try {
+            outputSecret = await yaml.safeLoad(secretText);
+            errorMessage = "";
+        } catch (e) {
+            errorMessage = `# ${e.message.replace(/\n/gm, "\n#")} \n`;
+        }
+    } while (errorMessage);
+
+    return outputSecret;
+}
+
+async function openEditor(fileText: string): Promise<string> {
+    const tmpFile = tempy.file();
+    try {
+        fs.writeFileSync(tmpFile, fileText);
+        child_process.spawnSync(process.env.EDITOR || "vi", [tmpFile], {
+            stdio: "inherit",
+        });
+        return fs.readFileSync(tmpFile, "utf8");
+    } finally {
+        fs.removeSync(tmpFile);
+    }
 }

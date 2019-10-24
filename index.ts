@@ -240,12 +240,18 @@ function setupYargs(yargBuilder: yb.YargBuilder): void {
             parameterName: "secret-key",
             describe: "Key to use to decrypt secret data values",
             type: "string",
+        }, {
+            parameterName: "edit",
+            describe: "Edit secret in the default editor",
+            type: "boolean",
+            default: false,
         }],
         handler: (argv: any) => cliCommand(() => kubeCrypt({
             action: "decrypt",
             file: argv.file,
             literal: argv.literal,
             secretKey: argv["secret-key"],
+            openEditor: argv.edit,
         })),
     });
     yargBuilder.withSubcommand({
@@ -263,12 +269,18 @@ function setupYargs(yargBuilder: yb.YargBuilder): void {
             parameterName: "secret-key",
             describe: "Key to use to encrypt secret data values",
             type: "string",
+        }, {
+            parameterName: "edit",
+            describe: "Edit secret in the default editor",
+            type: "boolean",
+            default: false,
         }],
         handler: (argv: any) => cliCommand(() => kubeCrypt({
             action: "encrypt",
             file: argv.file,
             literal: argv.literal,
             secretKey: argv["secret-key"],
+            openEditor: argv.edit,
         })),
     });
     yargBuilder.withSubcommand({
