@@ -123,6 +123,12 @@ function wrapLiteral(literal: string, prop: string): DeepPartial<k8s.V1Secret> {
     return secret;
 }
 
+/**
+ * Opens the secret in the editor and validates that the resulting secret is valid yaml.
+ * If the secret is not valid the editor is reopened.
+ * @param inputSecret the secret to be edited
+ * @returns the secret after the user has edited it in the editor
+ */
 async function edit(inputSecret: DeepPartial<k8s.V1Secret>): Promise<DeepPartial<k8s.V1Secret>> {
     const comment =
         `# Please edit the secret below. Lines beginning with a '#' will be ignored.
@@ -155,6 +161,11 @@ async function edit(inputSecret: DeepPartial<k8s.V1Secret>): Promise<DeepPartial
     return outputSecret;
 }
 
+/**
+ * Writes the string to a temporary file and then opens the the default editor or `vi`.
+ * @param fileText the contents of the file
+ * @returns the string contents of the processed file
+ */
 async function openEditor(fileText: string): Promise<string> {
     const tmpFile = tempy.file();
     try {
