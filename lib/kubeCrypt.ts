@@ -15,14 +15,14 @@
  */
 
 import * as k8s from "@kubernetes/client-node";
-import * as yaml from "js-yaml";
 import * as _ from "lodash";
 import { DeepPartial } from "ts-essentials";
 import {
     cryptEncode,
     handleSecretKeyParameter,
     handleSecretParameter,
-} from "./kubeCommon";
+    printSecret,
+} from "./kubeUtils";
 import * as print from "./print";
 
 /**
@@ -61,13 +61,7 @@ export async function kubeCrypt(opts: KubeCryptOptions): Promise<number> {
 
     try {
         const transformed = await cryptEncode(secret, opts.secretKey, opts.action === "encrypt", opts.base64);
-        if (opts.literal) {
-            print.log(transformed.data[0]);
-        } else if (/\.ya?ml$/.test(opts.file)) {
-            print.log(yaml.safeDump(transformed));
-        } else {
-            print.log(JSON.stringify(transformed, undefined, 2));
-        }
+        printSecret(transformed, opts);
     } catch (e) {
         print.error(`Failed to ${opts.action} secret: ${e.message}`);
         return 3;
