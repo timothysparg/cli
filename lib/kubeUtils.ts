@@ -26,6 +26,7 @@ import * as yaml from "js-yaml";
 import { DeepPartial } from "ts-essentials";
 import { maskString } from "./config";
 import { KubeCryptOptions } from "./kubeCrypt";
+import * as print from "./print";
 
 /**
  * Handle the literal or file secret parameter from the cli
@@ -120,4 +121,20 @@ export function base64(secret: DeepPartial<k8s.V1Secret>, encode: boolean): Deep
         secret.data[datum] = encoding;
     }
     return secret;
+}
+
+/**
+ * prints the secret to the output
+ * @param secret the secret to print
+ * @param opts literal or file from KubeCryptOptions
+ * @returns
+ */
+export function printSecret(secret: DeepPartial<k8s.V1Secret>, opts: Pick<KubeCryptOptions, "literal" | "file">): void {
+    if (opts.literal) {
+        print.log(secret.data[0]);
+    } else if (/\.ya?ml$/.test(opts.file)) {
+        print.log(yaml.safeDump(secret));
+    } else {
+        print.log(JSON.stringify(secret, undefined, 2));
+    }
 }

@@ -31,6 +31,7 @@ import { gitHook } from "./lib/gitHook";
 import { gqlFetch } from "./lib/gqlFetch";
 import { install } from "./lib/install";
 import { kubeCrypt } from "./lib/kubeCrypt";
+import { kubeEdit } from "./lib/kubeEdit";
 import { kubeFetch } from "./lib/kubeFetch";
 import { kubeInstall } from "./lib/kubeInstall";
 import * as print from "./lib/print";
@@ -241,11 +242,6 @@ function setupYargs(yargBuilder: yb.YargBuilder): void {
             describe: "Key to use to decrypt secret data values",
             type: "string",
         }, {
-            parameterName: "edit",
-            describe: "Edit secret in the default editor",
-            type: "boolean",
-            default: false,
-        }, {
             parameterName: "base64",
             describe: "Base64 decode data after decrypting",
             type: "boolean",
@@ -257,7 +253,6 @@ function setupYargs(yargBuilder: yb.YargBuilder): void {
             file: argv.file,
             literal: argv.literal,
             secretKey: argv["secret-key"],
-            openEditor: argv.edit,
         })),
     });
     yargBuilder.withSubcommand({
@@ -276,11 +271,6 @@ function setupYargs(yargBuilder: yb.YargBuilder): void {
             describe: "Key to use to encrypt secret data values",
             type: "string",
         }, {
-            parameterName: "edit",
-            describe: "Edit secret in the default editor",
-            type: "boolean",
-            default: false,
-        }, {
             parameterName: "base64",
             describe: "Base64 encode data before encrypting",
             type: "boolean",
@@ -292,7 +282,34 @@ function setupYargs(yargBuilder: yb.YargBuilder): void {
             file: argv.file,
             literal: argv.literal,
             secretKey: argv["secret-key"],
-            openEditor: argv.edit,
+        })),
+    });
+    yargBuilder.withSubcommand({
+        command: "kube-edit",
+        describe: "Decrypts a secret and opens it in an editor and then outputs the encrypted result",
+        parameters: [{
+            parameterName: "file",
+            describe: "Encrypt Kubernetes secret data values from secret spec file",
+            type: "string",
+        }, {
+            parameterName: "literal",
+            describe: "Encrypt secret data value provided as a literal string",
+            type: "string",
+        }, {
+            parameterName: "secret-key",
+            describe: "Key to use to encrypt secret data values",
+            type: "string",
+        }, {
+            parameterName: "base64",
+            describe: "Base64 encode data before encrypting",
+            type: "boolean",
+            default: false,
+        }],
+        handler: (argv: any) => cliCommand(() => kubeEdit({
+            base64: argv.base64,
+            file: argv.file,
+            literal: argv.literal,
+            secretKey: argv["secret-key"],
         })),
     });
     yargBuilder.withSubcommand({
