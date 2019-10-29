@@ -37,8 +37,6 @@ export interface KubeCryptOptions {
     literal?: string;
     /** Encryption key to use for encryption/decryption. */
     secretKey?: string;
-    /** Open secret in editor */
-    openEditor?: boolean;
     /** Option to Base64 encode/decode data */
     base64?: boolean;
 }
