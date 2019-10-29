@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { spawnPromise } from "@atomist/sdm";
 import * as k8s from "@kubernetes/client-node";
 import * as fs from "fs-extra";
 import * as yaml from "js-yaml";
@@ -28,7 +29,6 @@ import {
     printSecret,
 } from "./kubeUtils";
 import * as print from "./print";
-import { spawnSync } from "child_process";
 
 type kubeEditOptions = Omit<KubeCryptOptions, "action">;
 
@@ -116,7 +116,7 @@ async function openEditor(fileText: string): Promise<string> {
     await tmp.withFile(async ({path, fd}) => {
         await fs.writeFile(path, fileText);
 
-        spawnSync(process.env.EDITOR || "vi", [path], {
+        await spawnPromise(process.env.EDITOR || "vi", [path], {
             stdio: "inherit",
         });
         value = await fs.readFile(path, "utf8");
