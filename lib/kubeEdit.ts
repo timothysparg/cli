@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-// import { spawnPromise } from "@atomist/sdm";
 import * as k8s from "@kubernetes/client-node";
 import * as fs from "fs-extra";
 import * as yaml from "js-yaml";
 import * as _ from "lodash";
-import * as tempy from "tempy";
+import * as tmp from "tmp-promise";
 import { DeepPartial } from "ts-essentials";
 import { KubeCryptOptions } from "./kubeCrypt";
 import {
@@ -43,8 +42,6 @@ export async function kubeEdit(opts: kubeEditOptions): Promise<number> {
         return 2;
     }
     opts.secretKey = await handleSecretKeyParameter(opts);
-    // print.info(`secret=${opts.secretKey}`);
-    print.log(yaml.safeDump(secret));
 
     try {
         secret = await cryptEncode(secret, opts.secretKey, false, opts.base64);
@@ -115,15 +112,14 @@ async function edit(inputSecret: DeepPartial<k8s.V1Secret>): Promise<DeepPartial
  * @returns the string contents of the processed file
  */
 async function openEditor(fileText: string): Promise<string> {
-    const tmpFile = tempy.file();
-    try {
-        fs.writeFileSync(tmpFile, fileText);
-        spawnSync(process.env.EDITOR || "vi", [tmpFile], {
+    let value: string;
+    await tmp.withFile(async ({path, fd}) => {
+        await fs.writeFile(path, fileText);
+
+        spawnSync(process.env.EDITOR || "vi", [path], {
             stdio: "inherit",
         });
-
-        return fs.readFileSync(tmpFile, "utf8");
-    } finally {
-        fs.removeSync(tmpFile);
-    }
+        value = await fs.readFile(path, "utf8");
+      });
+    return value;
 }
