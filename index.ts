@@ -289,19 +289,19 @@ function setupYargs(yargBuilder: yb.YargBuilder): void {
         describe: "Decrypts a secret and opens it in an editor and then outputs the encrypted result",
         parameters: [{
             parameterName: "file",
-            describe: "Encrypt Kubernetes secret data values from secret spec file",
+            describe: "Edit Kubernetes secret data values from secret spec file",
             type: "string",
         }, {
             parameterName: "literal",
-            describe: "Encrypt secret data value provided as a literal string",
+            describe: "Edit secret data value provided as a literal string",
             type: "string",
         }, {
             parameterName: "secret-key",
-            describe: "Key to use to encrypt secret data values",
+            describe: "Key to use to encrypt & decrypt secret data values",
             type: "string",
         }, {
             parameterName: "base64",
-            describe: "Base64 encode data before encrypting",
+            describe: "Base64 encode data",
             type: "boolean",
             default: false,
         }],
