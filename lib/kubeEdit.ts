@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import { spawnPromise } from "@atomist/sdm";
 import * as k8s from "@kubernetes/client-node";
-import * as fs from "fs-extra";
+import { edit } from "external-editor";
 import * as yaml from "js-yaml";
 import * as _ from "lodash";
-import * as tmp from "tmp-promise";
 import { DeepPartial } from "ts-essentials";
 import { KubeCryptOptions } from "./kubeCrypt";
 import {
@@ -35,7 +33,7 @@ type kubeEditOptions = Omit<KubeCryptOptions, "action">;
 export async function kubeEdit(opts: kubeEditOptions): Promise<number> {
     let secret: DeepPartial<k8s.V1Secret>;
     try {
-        const action: Pick<KubeCryptOptions, "action"> = {action: "decrypt"};
+        const action: Pick<KubeCryptOptions, "action"> = { action: "decrypt" };
         secret = await handleSecretParameter(Object.assign(opts, action));
     } catch (e) {
         print.error(`Failed to load secret spec from file '${opts.file}': ${e.message}`);
@@ -51,7 +49,7 @@ export async function kubeEdit(opts: kubeEditOptions): Promise<number> {
     }
 
     try {
-        secret = await edit(secret);
+        secret = await editSecret(secret);
     } catch (e) {
         print.error(`Edit cancelled, ${e.message}`);
         return 4;
@@ -74,7 +72,7 @@ export async function kubeEdit(opts: kubeEditOptions): Promise<number> {
  * @param inputSecret the secret to be edited
  * @returns the secret after the user has edited it in the editor
  */
-async function edit(inputSecret: DeepPartial<k8s.V1Secret>): Promise<DeepPartial<k8s.V1Secret>> {
+async function editSecret(inputSecret: DeepPartial<k8s.V1Secret>): Promise<DeepPartial<k8s.V1Secret>> {
     const comment =
         `# Please edit the secret below. Lines beginning with a '#' will be ignored.
 # An empty file will abort the edit.
@@ -88,7 +86,7 @@ async function edit(inputSecret: DeepPartial<k8s.V1Secret>): Promise<DeepPartial
         // join everything together to present it to the user
         secretText = comment + errorMessage + secretText;
 
-        secretText = await openEditor(secretText);
+        secretText = edit(secretText);
         // remove all lines that start with comments
         secretText = secretText.replace(/^#.*\n?/gm, "");
         if (!secretText.trim()) {
@@ -104,22 +102,4 @@ async function edit(inputSecret: DeepPartial<k8s.V1Secret>): Promise<DeepPartial
     } while (errorMessage);
 
     return outputSecret;
-}
-
-/**
- * Writes the string to a temporary file and then opens the the default editor or `vi`.
- * @param fileText the contents of the file
- * @returns the string contents of the processed file
- */
-async function openEditor(fileText: string): Promise<string> {
-    let value: string;
-    await tmp.withFile(async ({path, fd}) => {
-        await fs.writeFile(path, fileText);
-
-        await spawnPromise(process.env.EDITOR || "vi", [path], {
-            stdio: "inherit",
-        });
-        value = await fs.readFile(path, "utf8");
-      });
-    return value;
 }
