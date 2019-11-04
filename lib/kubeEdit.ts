@@ -22,13 +22,12 @@ import { DeepPartial } from "ts-essentials";
 import { KubeCryptOptions } from "./kubeCrypt";
 import {
     cryptEncode,
-    handleSecretKeyParameter,
     handleSecretParameter,
-    printSecret,
+    writeSecret,
 } from "./kubeUtils";
 import * as print from "./print";
 
-type kubeEditOptions = Omit<KubeCryptOptions, "action">;
+type kubeEditOptions = Pick<KubeCryptOptions, "file" | "secretKey">;
 
 export async function kubeEdit(opts: kubeEditOptions): Promise<number> {
     let secret: DeepPartial<k8s.V1Secret>;
@@ -39,10 +38,9 @@ export async function kubeEdit(opts: kubeEditOptions): Promise<number> {
         print.error(`Failed to load secret spec from file '${opts.file}': ${e.message}`);
         return 2;
     }
-    opts.secretKey = await handleSecretKeyParameter(opts);
 
     try {
-        secret = await cryptEncode(secret, opts.secretKey, false, opts.base64);
+        secret = await cryptEncode(secret, opts.secretKey, false, true);
     } catch (e) {
         print.error(`Failed to decrypt secret: ${e.message}`);
         return 3;
@@ -56,11 +54,17 @@ export async function kubeEdit(opts: kubeEditOptions): Promise<number> {
     }
 
     try {
-        secret = await cryptEncode(secret, opts.secretKey, true, opts.base64);
-        printSecret(secret, opts);
+        secret = await cryptEncode(secret, opts.secretKey, true, true);
     } catch (e) {
         print.error(`Failed to encrpyt secret: ${e.message}`);
         return 3;
+    }
+
+    try {
+        await writeSecret(secret, opts);
+    } catch (e) {
+        print.error(`Failed to write secret to file: ${e.message}`);
+        return 5;
     }
 
     return 0;

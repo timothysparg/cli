@@ -291,24 +291,14 @@ function setupYargs(yargBuilder: yb.YargBuilder): void {
             parameterName: "file",
             describe: "Edit Kubernetes secret data values from secret spec file",
             type: "string",
-        }, {
-            parameterName: "literal",
-            describe: "Edit secret data value provided as a literal string",
-            type: "string",
+            required: true,
         }, {
             parameterName: "secret-key",
-            describe: "Key to use to encrypt & decrypt secret data values",
+            describe: "Key to use to decrypt & encrypt secret data values",
             type: "string",
-        }, {
-            parameterName: "base64",
-            describe: "Base64 encode data",
-            type: "boolean",
-            default: false,
         }],
         handler: (argv: any) => cliCommand(() => kubeEdit({
-            base64: argv.base64,
             file: argv.file,
-            literal: argv.literal,
             secretKey: argv["secret-key"],
         })),
     });

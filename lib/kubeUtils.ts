@@ -92,7 +92,7 @@ function wrapLiteral(literal: string, prop: string): DeepPartial<k8s.V1Secret> {
 /**
  * Does the requested encryption/decryption of the provided secret and optionally base64 encodes/decodes the secret
  * @param input the secret to encrypt/decrypt
- * @param key the secret key to encrypt/decrypy with
+ * @param key the secret key to encrypt/decrypt with
  * @param b64 true to bese64 encode/decode
  * @return the encrypted/decrypted and optionally base64 encoded/decoded secret
  */
@@ -127,7 +127,6 @@ export function base64(secret: DeepPartial<k8s.V1Secret>, encode: boolean): Deep
  * prints the secret to the output
  * @param secret the secret to print
  * @param opts literal or file from KubeCryptOptions
- * @returns
  */
 export function printSecret(secret: DeepPartial<k8s.V1Secret>, opts: Pick<KubeCryptOptions, "literal" | "file">): void {
     if (opts.literal) {
@@ -137,4 +136,14 @@ export function printSecret(secret: DeepPartial<k8s.V1Secret>, opts: Pick<KubeCr
     } else {
         print.log(JSON.stringify(secret, undefined, 2));
     }
+}
+
+/**
+ * writes the secret to file
+ * @param secret the secret to write
+ * @param opts file from KubeCryptOptions
+ */
+export async function writeSecret(secret: DeepPartial<k8s.V1Secret>, opts: Pick<KubeCryptOptions, "file">): Promise<void> {
+    const dumpString =  /\.ya?ml$/.test(opts.file) ? yaml.safeDump(secret) : JSON.stringify(secret, undefined, 2);
+    await fs.writeFile(opts.file, dumpString);
 }
