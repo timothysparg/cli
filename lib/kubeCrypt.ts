@@ -18,7 +18,8 @@ import * as k8s from "@kubernetes/client-node";
 import * as _ from "lodash";
 import { DeepPartial } from "ts-essentials";
 import {
-    cryptEncode,
+    base64,
+    crypt,
     handleSecretKeyParameter,
     handleSecretParameter,
     printSecret,
@@ -57,8 +58,16 @@ export async function kubeCrypt(opts: KubeCryptOptions): Promise<number> {
     }
     opts.secretKey = await handleSecretKeyParameter(opts);
 
+    const base64Encode = (s: DeepPartial<k8s.V1Secret>) => opts.base64 ? base64(s, "encode") : s;
+    const base64Decode = (s: DeepPartial<k8s.V1Secret>) => opts.base64 ? base64(s, "decode") : s;
+
     try {
-        const transformed = await cryptEncode(secret, opts.secretKey, opts.action === "encrypt", opts.base64);
+        let transformed: DeepPartial<k8s.V1Secret>;
+        if (opts.action === "encrypt") {
+            transformed = await crypt(base64Encode(secret), opts);
+        } else {
+            transformed = base64Decode(await crypt(secret, opts));
+        }
         printSecret(transformed, opts);
     } catch (e) {
         print.error(`Failed to ${opts.action} secret: ${e.message}`);

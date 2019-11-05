@@ -19,7 +19,7 @@ import * as assert from "power-assert";
 import { DeepPartial } from "ts-essentials";
 import {
 base64,
-cryptEncode,
+crypt,
 } from "../lib/kubeUtils";
 
 describe("kubeCrypt", () => {
@@ -37,7 +37,7 @@ describe("kubeCrypt", () => {
                 },
             };
 
-            const encodedSecret = base64(secret, true);
+            const encodedSecret = base64(secret, "encode");
 
             assert.deepStrictEqual(encodedSecret, {
                 apiVersion: "v1",
@@ -60,7 +60,7 @@ describe("kubeCrypt", () => {
                 },
             };
 
-            const encodedSecret = base64(secret, false);
+            const encodedSecret = base64(secret, "decode");
 
             assert.deepStrictEqual(encodedSecret, {
                 apiVersion: "v1",
@@ -86,7 +86,7 @@ describe("kubeCrypt", () => {
                 },
             };
 
-            const encodedSecret = await cryptEncode(secret, "super-secret-key", true, false);
+            const encodedSecret = await crypt(secret, { action: "encrypt", secretKey: "super-secret-key" });
 
             assert.deepStrictEqual(encodedSecret, {
                 apiVersion: "v1",
@@ -110,7 +110,8 @@ describe("kubeCrypt", () => {
                 },
             };
 
-            const encodedSecret = await cryptEncode(secret, "super-secret-key", true, true);
+            let encodedSecret = base64(secret, "encode");
+            encodedSecret = await crypt(encodedSecret, { action: "encrypt", secretKey: "super-secret-key" });
 
             assert.deepStrictEqual(encodedSecret, {
                 apiVersion: "v1",
@@ -134,7 +135,7 @@ describe("kubeCrypt", () => {
                 },
             };
 
-            const encodedSecret = await cryptEncode(secret, "super-secret-key", false, false);
+            const encodedSecret = await crypt(secret, { action: "decrypt", secretKey: "super-secret-key" });
 
             assert.deepStrictEqual(encodedSecret, {
                 apiVersion: "v1",
@@ -158,7 +159,8 @@ describe("kubeCrypt", () => {
                 },
             };
 
-            const encodedSecret = await cryptEncode(secret, "super-secret-key", false, true);
+            let encodedSecret = await crypt(secret, { action: "decrypt", secretKey: "super-secret-key" });
+            encodedSecret = base64(encodedSecret, "decode");
 
             assert.deepStrictEqual(encodedSecret, {
                 apiVersion: "v1",

@@ -90,34 +90,33 @@ function wrapLiteral(literal: string, prop: string): DeepPartial<k8s.V1Secret> {
 }
 
 /**
- * Does the requested encryption/decryption of the provided secret and optionally base64 encodes/decodes the secret
+ * Does the requested encryption/decryption of the provided secret
  * @param input the secret to encrypt/decrypt
  * @param key the secret key to encrypt/decrypt with
- * @param b64 true to bese64 encode/decode
- * @return the encrypted/decrypted and optionally base64 encoded/decoded secret
+ * @return the encrypted/decrypted secret
  */
-export async function cryptEncode(input: DeepPartial<k8s.V1Secret>, key: string, encrypt: boolean, b64: boolean): Promise<DeepPartial<k8s.V1Secret>> {
-    const doBase64 = (s: DeepPartial<k8s.V1Secret>) => b64 ? base64(s, encrypt) : s;
+export async function crypt(input: DeepPartial<k8s.V1Secret>,
+                              opts: Pick<KubeCryptOptions, "action" | "secretKey">): Promise<DeepPartial<k8s.V1Secret>> {
 
     let secret: DeepPartial<k8s.V1Secret>;
-    if (encrypt) {
-        secret = doBase64(input);
-        secret = await encryptSecret(secret, key);
+    if (opts.action === "encrypt") {
+        secret = await encryptSecret(input, opts.secretKey);
     } else {
-        secret = await decryptSecret(input, key);
-        secret = doBase64(secret);
+        secret = await decryptSecret(input, opts.secretKey);
     }
+
     return secret;
 }
 
 /**
  * Encodes or decodes the data section of a secret
  * @param secret The secret to encode/decode
- * @param encode True encodes, False decodes
+ * @param action encode or decode
  */
-export function base64(secret: DeepPartial<k8s.V1Secret>, encode: boolean): DeepPartial<k8s.V1Secret> {
+export function base64(secret: DeepPartial<k8s.V1Secret>, action: "encode" | "decode"): DeepPartial<k8s.V1Secret> {
     for (const datum of Object.keys(secret.data)) {
-        const encoding = encode ? Buffer.from(secret.data[datum]).toString("base64") : Buffer.from(secret.data[datum], "base64").toString();
+        const encoding = action === "encode" ?
+            Buffer.from(secret.data[datum]).toString("base64") : Buffer.from(secret.data[datum], "base64").toString();
         secret.data[datum] = encoding;
     }
     return secret;
@@ -144,6 +143,6 @@ export function printSecret(secret: DeepPartial<k8s.V1Secret>, opts: Pick<KubeCr
  * @param opts file from KubeCryptOptions
  */
 export async function writeSecret(secret: DeepPartial<k8s.V1Secret>, opts: Pick<KubeCryptOptions, "file">): Promise<void> {
-    const dumpString =  /\.ya?ml$/.test(opts.file) ? yaml.safeDump(secret) : JSON.stringify(secret, undefined, 2);
+    const dumpString = /\.ya?ml$/.test(opts.file) ? yaml.safeDump(secret) : JSON.stringify(secret, undefined, 2);
     await fs.writeFile(opts.file, dumpString);
 }

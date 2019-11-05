@@ -21,7 +21,8 @@ import * as _ from "lodash";
 import { DeepPartial } from "ts-essentials";
 import { KubeCryptOptions } from "./kubeCrypt";
 import {
-    cryptEncode,
+    base64,
+    crypt,
     handleSecretParameter,
     writeSecret,
 } from "./kubeUtils";
@@ -32,19 +33,21 @@ type kubeEditOptions = Pick<KubeCryptOptions, "file" | "secretKey">;
 export async function kubeEdit(opts: kubeEditOptions): Promise<number> {
     let secret: DeepPartial<k8s.V1Secret>;
     try {
-        const action: Pick<KubeCryptOptions, "action"> = { action: "decrypt" };
-        secret = await handleSecretParameter(Object.assign(opts, action));
+        secret = await handleSecretParameter(Object.assign(opts, decryptAction()));
     } catch (e) {
         print.error(`Failed to load secret spec from file '${opts.file}': ${e.message}`);
         return 2;
     }
 
     try {
-        secret = await cryptEncode(secret, opts.secretKey, false, true);
+        if (opts.secretKey) {
+            secret = await crypt (secret, Object.assign(opts, decryptAction()));
+        }
     } catch (e) {
         print.error(`Failed to decrypt secret: ${e.message}`);
         return 3;
     }
+    secret = base64(secret, "decode");
 
     try {
         secret = await editSecret(secret);
@@ -53,8 +56,11 @@ export async function kubeEdit(opts: kubeEditOptions): Promise<number> {
         return 4;
     }
 
+    secret = base64(secret, "encode");
     try {
-        secret = await cryptEncode(secret, opts.secretKey, true, true);
+        if (opts.secretKey) {
+            secret = await crypt (secret, Object.assign(opts, encryptAction()));
+        }
     } catch (e) {
         print.error(`Failed to encrpyt secret: ${e.message}`);
         return 3;
@@ -106,4 +112,12 @@ async function editSecret(inputSecret: DeepPartial<k8s.V1Secret>): Promise<DeepP
     } while (errorMessage);
 
     return outputSecret;
+}
+
+function encryptAction(): Pick<KubeCryptOptions, "action"> {
+    return { action: "encrypt" };
+}
+
+function decryptAction(): Pick<KubeCryptOptions, "action"> {
+    return { action: "decrypt" };
 }
