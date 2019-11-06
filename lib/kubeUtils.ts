@@ -96,7 +96,7 @@ function wrapLiteral(literal: string, prop: string): DeepPartial<k8s.V1Secret> {
  * @return the encrypted/decrypted secret
  */
 export async function crypt(input: DeepPartial<k8s.V1Secret>,
-                              opts: Pick<KubeCryptOptions, "action" | "secretKey">): Promise<DeepPartial<k8s.V1Secret>> {
+                            opts: Pick<KubeCryptOptions, "action" | "secretKey">): Promise<DeepPartial<k8s.V1Secret>> {
 
     let secret: DeepPartial<k8s.V1Secret>;
     if (opts.action === "encrypt") {
