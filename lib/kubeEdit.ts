@@ -16,14 +16,17 @@
 
 import * as k8s from "@kubernetes/client-node";
 import { edit } from "external-editor";
+import * as fs from "fs-extra";
 import * as yaml from "js-yaml";
 import * as _ from "lodash";
 import { DeepPartial } from "ts-essentials";
-import { KubeCryptOptions } from "./kubeCrypt";
+import {
+    KubeCryptActions,
+    KubeCryptOptions,
+} from "./kubeCrypt";
 import {
     base64,
     crypt,
-    handleSecretParameter,
     writeSecret,
 } from "./kubeUtils";
 import * as print from "./print";
@@ -33,7 +36,8 @@ type kubeEditOptions = Pick<KubeCryptOptions, "file" | "secretKey">;
 export async function kubeEdit(opts: kubeEditOptions): Promise<number> {
     let secret: DeepPartial<k8s.V1Secret>;
     try {
-        secret = await handleSecretParameter(Object.assign(opts, decryptAction()));
+        const secretString = await fs.readFile(opts.file, "utf8");
+        secret = await yaml.safeLoad(secretString);
     } catch (e) {
         print.error(`Failed to load secret spec from file '${opts.file}': ${e.message}`);
         return 2;
@@ -41,7 +45,7 @@ export async function kubeEdit(opts: kubeEditOptions): Promise<number> {
 
     try {
         if (opts.secretKey) {
-            secret = await crypt (secret, Object.assign(opts, decryptAction()));
+            secret = await crypt(secret, crypAction(opts, "decrypt"));
         }
     } catch (e) {
         print.error(`Failed to decrypt secret: ${e.message}`);
@@ -59,7 +63,7 @@ export async function kubeEdit(opts: kubeEditOptions): Promise<number> {
     secret = base64(secret, "encode");
     try {
         if (opts.secretKey) {
-            secret = await crypt (secret, Object.assign(opts, encryptAction()));
+            secret = await crypt(secret, crypAction(opts, "encrypt"));
         }
     } catch (e) {
         print.error(`Failed to encrpyt secret: ${e.message}`);
@@ -114,10 +118,6 @@ async function editSecret(inputSecret: DeepPartial<k8s.V1Secret>): Promise<DeepP
     return outputSecret;
 }
 
-function encryptAction(): Pick<KubeCryptOptions, "action"> {
-    return { action: "encrypt" };
-}
-
-function decryptAction(): Pick<KubeCryptOptions, "action"> {
-    return { action: "decrypt" };
+function crypAction(opts: kubeEditOptions, KubeCryptAction: KubeCryptActions): KubeCryptOptions {
+    return { ...opts, ...{ action: KubeCryptAction } };
 }

@@ -31,7 +31,7 @@ import * as print from "./print";
  */
 export interface KubeCryptOptions {
     /** To encrypt or decrypt? */
-    action: "decrypt" | "encrypt";
+    action: KubeCryptActions;
     /** Path to Kubernetes secret spec file. */
     file?: string;
     /** Literal string to encrypt/decrypt. */
@@ -41,6 +41,8 @@ export interface KubeCryptOptions {
     /** Option to Base64 encode/decode data */
     base64?: boolean;
 }
+
+export type KubeCryptActions = "decrypt" | "encrypt";
 
 /**
  * Encrypt or decrypt secret data values.
