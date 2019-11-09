@@ -14,80 +14,16 @@
  * limitations under the License.
  */
 
-import { guid } from "@atomist/automation-client";
 import {
     decryptSecret,
     encryptSecret,
 } from "@atomist/sdm-pack-k8s";
 import * as k8s from "@kubernetes/client-node";
 import * as fs from "fs-extra";
-import * as inquirer from "inquirer";
 import * as yaml from "js-yaml";
 import { DeepPartial } from "ts-essentials";
-import { maskString } from "./config";
 import { KubeCryptOptions } from "./kubeCrypt";
 import * as print from "./print";
-
-/**
- * Handle the literal or file secret parameter from the cli
- * @param opts file or literal of KubeCryptOptions
- * @throws error if the yaml cannot be loaded
- * @returns secret
- */
-export async function handleSecretParameter(opts: Pick<KubeCryptOptions, "file" | "literal" | "action">): Promise<DeepPartial<k8s.V1Secret>> {
-    let secret: DeepPartial<k8s.V1Secret>;
-    const literalProp = `literal-${guid()}`;
-    if (opts.literal) {
-        secret = wrapLiteral(opts.literal, literalProp);
-    } else if (opts.file) {
-        const secretString = await fs.readFile(opts.file, "utf8");
-        secret = await yaml.safeLoad(secretString);
-    } else {
-        const answers = await inquirer.prompt<Record<string, string>>([{
-            type: "input",
-            name: "literal",
-            message: `Enter literal string to be ${opts.action}ed:`,
-        }]);
-        secret = wrapLiteral(answers.literal, literalProp);
-    }
-    return secret;
-}
-
-/**
- * Handle the secret key parameter from the cli
- * @param opts secretKey from KubeCryptOptions
- * @returns the secret
- */
-export async function handleSecretKeyParameter(opts: Pick<KubeCryptOptions, "secretKey">): Promise<string> {
-    if (!opts.secretKey) {
-        const answers = await inquirer.prompt<Record<string, string>>([{
-            type: "input",
-            name: "secretKey",
-            message: `Enter encryption key:`,
-            transformer: maskString,
-            validate: v => v.length < 1 ? "Secret key must have non-zero length" : true,
-        }]);
-        opts.secretKey = answers.secretKey;
-    }
-    return opts.secretKey;
-}
-
-/**
- *  Creates a k8s.V1Secret with the input in the data section.
- * @param literal String to wrap in k8s.V1Secret
- * @param prop property name
- * @returns the k8s.V1Secret
- */
-function wrapLiteral(literal: string, prop: string): DeepPartial<k8s.V1Secret> {
-    const secret: DeepPartial<k8s.V1Secret> = {
-        apiVersion: "v1",
-        data: {},
-        kind: "Secret",
-        type: "Opaque",
-    };
-    secret.data[prop] = literal;
-    return secret;
-}
 
 /**
  * Does the requested encryption/decryption of the provided secret
