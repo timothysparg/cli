@@ -112,12 +112,18 @@ describe("kubeEdit", () => {
         });
 
         it("invalid file provided", async () => {
-            process.env.EDITOR = "npx replace nothing yoursecret";
+            const invalidFileContents = `apiVersion: v1
+            kind: Secret
+            metadata:
+              name: mysecret
+            type: Opaque
+            data:`;
 
             let commandErrorCode;
-
-            commandErrorCode = await kubeEdit({file: "a-file.yaml"});
-
+            await withFile(async ({path, fd}) => {
+                await fs.writeFile(path, invalidFileContents);
+                commandErrorCode = await kubeEdit({file: path});
+            });
             assert.equal(2, commandErrorCode);
         });
     });
