@@ -119,5 +119,5 @@ async function editSecret(inputSecret: DeepPartial<k8s.V1Secret>): Promise<DeepP
 }
 
 function crypAction(opts: kubeEditOptions, KubeCryptAction: KubeCryptActions): KubeCryptOptions {
-    return { ...opts, ...{ action: KubeCryptAction } };
+    return { ...opts, action: KubeCryptAction };
 }
