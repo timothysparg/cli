@@ -58,7 +58,7 @@ export async function kubeCrypt(opts: KubeCryptOptions): Promise<number> {
     try {
         secret = await handleSecretParameter(opts);
     } catch (e) {
-        print.error(`Failed to load secret spec from file '${opts.file}': ${e.message}`);
+        print.error(`Failed to load secret spec from ${opts.file ? `'${opts.file}'` : "--file or --literal"}: ${e.message}`);
         return 2;
     }
     opts.secretKey = await handleSecretKeyParameter(opts);
