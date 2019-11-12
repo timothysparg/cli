@@ -285,20 +285,20 @@ function setupYargs(yargBuilder: yb.YargBuilder): void {
         })),
     });
     yargBuilder.withSubcommand({
-        command: "kube-edit",
-        describe: "Decrypts a secret and opens it in an editor and then outputs the encrypted result",
+        command: "kube-edit <secret-spec-file>",
+        describe: "Decrypts a secret and opens it in an editor. Output is re-encrypted and saved back to the original file",
+        positional: [{
+            key: "secret-spec-file", opts: {
+                describe: "Kubernetes secret spec file",
+            },
+        }],
         parameters: [{
-            parameterName: "file",
-            describe: "Edit Kubernetes secret data values from secret spec file",
-            type: "string",
-            required: true,
-        }, {
             parameterName: "secret-key",
-            describe: "Key to use to decrypt & encrypt secret data values",
+            describe: "Key used to decrypt & encrypt secret data values",
             type: "string",
         }],
         handler: (argv: any) => cliCommand(() => kubeEdit({
-            file: argv.file,
+            file: argv["secret-spec-file"],
             secretKey: argv["secret-key"],
         })),
     });

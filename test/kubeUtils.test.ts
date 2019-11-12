@@ -18,8 +18,8 @@ import * as k8s from "@kubernetes/client-node";
 import * as assert from "power-assert";
 import { DeepPartial } from "ts-essentials";
 import {
-base64,
-crypt,
+    base64,
+    crypt,
 } from "../lib/kubeUtils";
 
 describe("kubeCrypt", () => {
@@ -110,10 +110,12 @@ describe("kubeCrypt", () => {
                 },
             };
 
-            let encodedSecret = base64(secret, "encode");
-            encodedSecret = await crypt(encodedSecret, { action: "encrypt", secretKey: "super-secret-key" });
+            const encryptedSecret = await crypt(
+                base64(secret, "encode"),
+                { action: "encrypt", secretKey: "super-secret-key" },
+            );
 
-            assert.deepStrictEqual(encodedSecret, {
+            assert.deepStrictEqual(encryptedSecret, {
                 apiVersion: "v1",
                 kind: "Secret",
                 type: "Opaque",
@@ -159,10 +161,10 @@ describe("kubeCrypt", () => {
                 },
             };
 
-            let encodedSecret = await crypt(secret, { action: "decrypt", secretKey: "super-secret-key" });
-            encodedSecret = base64(encodedSecret, "decode");
+            const decryptedSecret = await crypt(secret, { action: "decrypt", secretKey: "super-secret-key" });
+            const decodedSecret = base64(decryptedSecret, "decode");
 
-            assert.deepStrictEqual(encodedSecret, {
+            assert.deepStrictEqual(decodedSecret, {
                 apiVersion: "v1",
                 kind: "Secret",
                 type: "Opaque",
