@@ -17,7 +17,7 @@
 import { guid } from "@atomist/automation-client";
 import * as k8s from "@kubernetes/client-node";
 import * as fs from "fs-extra";
-import inquirer = require("inquirer");
+import * as inquirer from "inquirer";
 import * as yaml from "js-yaml";
 import * as _ from "lodash";
 import { DeepPartial } from "ts-essentials";
