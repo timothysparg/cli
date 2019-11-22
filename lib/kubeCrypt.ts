@@ -45,6 +45,7 @@ export interface KubeCryptOptions {
     base64?: boolean;
 }
 
+/** Action to perform */
 export type KubeCryptActions = "decrypt" | "encrypt";
 
 /**
@@ -55,10 +56,9 @@ export type KubeCryptActions = "decrypt" | "encrypt";
  */
 export async function kubeCrypt(opts: KubeCryptOptions): Promise<number> {
     let secret: DeepPartial<k8s.V1Secret>;
-    try {
-        secret = await handleSecretParameter(opts);
-    } catch (e) {
-        print.error(`Failed to load secret spec from ${opts.file ? `'${opts.file}'` : "--file or --literal"}: ${e.message}`);
+
+    secret = await handleSecretParameter(opts);
+    if (!secret) {
         return 2;
     }
     opts.secretKey = await handleSecretKeyParameter(opts);
@@ -85,8 +85,7 @@ export async function kubeCrypt(opts: KubeCryptOptions): Promise<number> {
 /**
  * Handle the literal or file secret parameter from the cli
  * @param opts file or literal of KubeCryptOptions
- * @throws error if the yaml cannot be loaded
- * @returns secret
+ * @returns secret or undefined if the file cannot be loaded
  */
 export async function handleSecretParameter(opts: Pick<KubeCryptOptions, "file" | "literal" | "action">): Promise<DeepPartial<k8s.V1Secret>> {
     let secret: DeepPartial<k8s.V1Secret>;
@@ -94,8 +93,13 @@ export async function handleSecretParameter(opts: Pick<KubeCryptOptions, "file" 
     if (opts.literal) {
         secret = wrapLiteral(opts.literal, literalProp);
     } else if (opts.file) {
-        const secretString = await fs.readFile(opts.file, "utf8");
-        secret = await yaml.safeLoad(secretString);
+        try {
+            const secretString = await fs.readFile(opts.file, "utf8");
+            secret = await yaml.safeLoad(secretString);
+        } catch (e) {
+            print.error(`Failed to load secret spec from '${opts.file}'`);
+            return undefined;
+        }
     } else {
         const answers = await inquirer.prompt<Record<string, string>>([{
             type: "input",
