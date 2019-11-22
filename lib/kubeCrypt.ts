@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { guid } from "@atomist/automation-client";
 import * as k8s from "@kubernetes/client-node";
 import * as fs from "fs-extra";
 import * as inquirer from "inquirer";
@@ -89,9 +88,8 @@ export async function kubeCrypt(opts: KubeCryptOptions): Promise<number> {
  */
 export async function handleSecretParameter(opts: Pick<KubeCryptOptions, "file" | "literal" | "action">): Promise<DeepPartial<k8s.V1Secret>> {
     let secret: DeepPartial<k8s.V1Secret>;
-    const literalProp = `literal-${guid()}`;
     if (opts.literal) {
-        secret = wrapLiteral(opts.literal, literalProp);
+        secret = wrapLiteral(opts.literal, opts.literal);
     } else if (opts.file) {
         try {
             const secretString = await fs.readFile(opts.file, "utf8");
@@ -106,7 +104,8 @@ export async function handleSecretParameter(opts: Pick<KubeCryptOptions, "file" 
             name: "literal",
             message: `Enter literal string to be ${opts.action}ed:`,
         }]);
-        secret = wrapLiteral(answers.literal, literalProp);
+        opts.literal = answers.literal;
+        secret = wrapLiteral(answers.literal, opts.literal);
     }
     return secret;
 }

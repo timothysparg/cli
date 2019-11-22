@@ -65,7 +65,7 @@ export function base64(secret: DeepPartial<k8s.V1Secret>, action: "encode" | "de
  */
 export function printSecret(secret: DeepPartial<k8s.V1Secret>, opts: Pick<KubeCryptOptions, "literal" | "file">): void {
     if (opts.literal) {
-        print.log(secret.data[0]);
+        print.log(secret.data[opts.literal]);
     } else if (/\.ya?ml$/.test(opts.file)) {
         print.log(yaml.safeDump(secret));
     } else {
