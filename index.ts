@@ -233,10 +233,12 @@ function setupYargs(yargBuilder: yb.YargBuilder): void {
             parameterName: "file",
             describe: "Decrypt Kubernetes secret data values from secret spec file",
             type: "string",
+            conflicts: "literal",
         }, {
             parameterName: "literal",
             describe: "Decrypt secret data value provided as a literal string",
             type: "string",
+            conflicts: "file",
         }, {
             parameterName: "secret-key",
             describe: "Key to use to decrypt secret data values",
@@ -262,10 +264,12 @@ function setupYargs(yargBuilder: yb.YargBuilder): void {
             parameterName: "file",
             describe: "Encrypt Kubernetes secret data values from secret spec file",
             type: "string",
+            conflicts: "literal",
         }, {
             parameterName: "literal",
             describe: "Encrypt secret data value provided as a literal string",
             type: "string",
+            conflicts: "file",
         }, {
             parameterName: "secret-key",
             describe: "Key to use to encrypt secret data values",
