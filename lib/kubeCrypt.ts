@@ -88,9 +88,7 @@ export async function kubeCrypt(opts: KubeCryptOptions): Promise<number> {
  */
 export async function handleSecretParameter(opts: Pick<KubeCryptOptions, "file" | "literal" | "action">): Promise<DeepPartial<k8s.V1Secret>> {
     let secret: DeepPartial<k8s.V1Secret>;
-    if (opts.literal) {
-        secret = wrapLiteral(opts.literal, opts.literal);
-    } else if (opts.file) {
+    if (opts.file) {
         try {
             const secretString = await fs.readFile(opts.file, "utf8");
             secret = await yaml.safeLoad(secretString);
@@ -99,12 +97,14 @@ export async function handleSecretParameter(opts: Pick<KubeCryptOptions, "file" 
             return undefined;
         }
     } else {
-        const answers = await inquirer.prompt<Record<string, string>>([{
-            type: "input",
-            name: "literal",
-            message: `Enter literal string to be ${opts.action}ed:`,
-        }]);
-        opts.literal = answers.literal;
+        if (!opts.literal) {
+            const answers = await inquirer.prompt<Record<string, string>>([{
+                type: "input",
+                name: "literal",
+                message: `Enter literal string to be ${opts.action}ed:`,
+            }]);
+            opts.literal = answers.literal;
+        }
         secret = wrapLiteral(opts.literal, opts.literal);
     }
     return secret;
@@ -116,7 +116,7 @@ export async function handleSecretParameter(opts: Pick<KubeCryptOptions, "file" 
  * @param literal String to wrap in k8s.V1Secret
  * @returns the k8s.V1Secret
  */
-function wrapLiteral(prop: string, literal: string): DeepPartial<k8s.V1Secret> {
+export function wrapLiteral(prop: string, literal: string): DeepPartial<k8s.V1Secret> {
     const secret: DeepPartial<k8s.V1Secret> = {
         apiVersion: "v1",
         data: {},

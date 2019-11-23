@@ -18,7 +18,10 @@ import * as fs from "fs-extra";
 import * as yaml from "js-yaml";
 import * as assert from "power-assert";
 import { withFile } from "tmp-promise";
-import { handleSecretParameter } from "../lib/kubeCrypt";
+import {
+    handleSecretParameter,
+    wrapLiteral,
+} from "../lib/kubeCrypt";
 
 describe("kubeCrypt", () => {
 
@@ -57,6 +60,22 @@ describe("kubeCrypt", () => {
 
                 const key = Object.keys(s.data)[0];
                 assert.deepEqual(s.data[key], "something");
+            });
+        });
+    });
+
+    describe("wrapLiteral", () => {
+
+        it("single line with special characters", () => {
+            const o = wrapLiteral("thingmabob <>--!#@!", "doodad");
+
+            assert.deepEqual(o, {
+                apiVersion: "v1",
+                kind: "Secret",
+                type: "Opaque",
+                data: {
+                    "thingmabob <>--!#@!": "doodad",
+                },
             });
         });
     });
