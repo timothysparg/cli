@@ -105,18 +105,18 @@ export async function handleSecretParameter(opts: Pick<KubeCryptOptions, "file" 
             message: `Enter literal string to be ${opts.action}ed:`,
         }]);
         opts.literal = answers.literal;
-        secret = wrapLiteral(answers.literal, opts.literal);
+        secret = wrapLiteral(opts.literal, opts.literal);
     }
     return secret;
 }
 
 /**
  *  Creates a k8s.V1Secret with the input in the data section.
- * @param literal String to wrap in k8s.V1Secret
  * @param prop property name
+ * @param literal String to wrap in k8s.V1Secret
  * @returns the k8s.V1Secret
  */
-function wrapLiteral(literal: string, prop: string): DeepPartial<k8s.V1Secret> {
+function wrapLiteral(prop: string, literal: string): DeepPartial<k8s.V1Secret> {
     const secret: DeepPartial<k8s.V1Secret> = {
         apiVersion: "v1",
         data: {},
